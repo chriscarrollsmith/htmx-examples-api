@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HTMX Examples Multi Schema",
+  "description": "Schema for extracting multiple HTMX examples at once",
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier for the example (e.g., 'click-to-edit', 'active-search')"
+          },
+          "title": {
+            "type": "string",
+            "description": "Title of the example as shown on the page"
+          },
+          "category": {
+            "type": "string",
+            "description": "Category of the example (e.g., 'UI Patterns', 'Dialog Examples', 'Advanced Examples')"
+          },
+          "url": {
+            "type": "string",
+            "description": "Original URL of the example"
+          },
+          "description": {
+            "type": "string",
+            "description": "Short description of what the example demonstrates"
+          },
+          "html_snippets": {
+            "type": "array",
+            "description": "Array of HTML code snippets shown in the example",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "The HTML code snippet"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description or explanation of the code snippet"
+                }
+              },
+              "required": ["code"]
+            }
+          },
+          "javascript_snippets": {
+            "type": "array",
+            "description": "Array of JavaScript code snippets shown in the example",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "The JavaScript code snippet"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Description or explanation of the code snippet"
+                }
+              },
+              "required": ["code"]
+            }
+          },
+          "key_concepts": {
+            "type": "array",
+            "description": "Key HTMX concepts demonstrated in this example",
+            "items": {
+              "type": "string"
+            }
+          },
+          "htmx_attributes": {
+            "type": "array",
+            "description": "HTMX attributes used in this example (e.g., 'hx-get', 'hx-trigger', 'hx-swap')",
+            "items": {
+              "type": "string"
+            }
+          },
+          "full_content": {
+            "type": "string",
+            "description": "The full textual content of the example page with HTML tags removed"
+          },
+          "demo_explanation": {
+            "type": "string",
+            "description": "Explanation of how the demo works, extracted from the page"
+          },
+          "complexity_level": {
+            "type": "string",
+            "enum": ["beginner", "intermediate", "advanced"],
+            "description": "Subjective assessment of the example's complexity"
+          }
+        },
+        "required": ["id", "title", "category", "url", "description", "html_snippets", "key_concepts", "htmx_attributes"]
+      }
+    }
+  },
+  "required": ["items"]
+} 

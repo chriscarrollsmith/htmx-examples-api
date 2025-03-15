@@ -1,0 +1,101 @@
+{
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "unique identifier for the example (e.g., 'click-to-edit', 'active-search')"
+          },
+          "title": {
+            "type": "string",
+            "description": "title of the example as shown on the page"
+          },
+          "category": {
+            "type": "string",
+            "description": "category of the example (e.g., 'UI Patterns', 'Dialog Examples', 'Advanced Examples')"
+          },
+          "url": {
+            "type": "string",
+            "description": "original URL of the example"
+          },
+          "description": {
+            "type": "string",
+            "description": "short description of what the example demonstrates"
+          },
+          "html_snippets": {
+            "type": "array",
+            "description": "array of HTML code snippets with their descriptions",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "the HTML snippet"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "explanation of what the snippet does"
+                }
+              },
+              "required": ["code"]
+            }
+          },
+          "javascript_snippets": {
+            "type": "array",
+            "description": "array of JavaScript code snippets with their descriptions",
+            "items": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "the JavaScript snippet"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "explanation of what the snippet does"
+                }
+              },
+              "required": ["code"]
+            }
+          },
+          "key_concepts": {
+            "type": "array",
+            "description": "array of key HTMX concepts demonstrated in this example (e.g., 'AJAX requests', 'DOM swapping')",
+            "items": {
+              "type": "string"
+            }
+          },
+          "htmx_attributes": {
+            "type": "array",
+            "description": "array of HTMX attributes used in this example (e.g., 'hx-get', 'hx-trigger', 'hx-swap')",
+            "items": {
+              "type": "string"
+            }
+          },
+          "demo_explanation": {
+            "type": "string",
+            "description": "explanation of how the demo works, extracted from the page"
+          },
+          "complexity_level": {
+            "type": "string",
+            "enum": ["beginner", "intermediate", "advanced"],
+            "description": "subjective assessment of the example's complexity"
+          },
+          "use_cases": {
+            "type": "array",
+            "description": "array of common scenarios where this pattern would be useful",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["id", "title", "category", "url", "description", "html_snippets", "key_concepts", "htmx_attributes"]
+      }
+    }
+  },
+  "required": ["items"]
+} 

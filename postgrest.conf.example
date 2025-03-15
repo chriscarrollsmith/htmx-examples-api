@@ -1,0 +1,22 @@
+# PostgreSQL connection string
+db-uri = "postgres://username:password@hostname:port/database"
+
+# The database schema to expose to REST clients
+db-schema = "api"
+
+# The database role to use when executing commands
+db-anon-role = "web_anon"
+
+# The secret used to sign JWT tokens
+jwt-secret = "your-jwt-secret-here"
+
+# The maximum number of rows to return from a request
+max-rows = 100
+
+# Server settings
+server-port = 3000
+server-host = "0.0.0.0"
+
+# Set OpenAI API key as a custom setting
+db-extra-search-path = "public, openai"
+db-pre-request = "SET app.openai_api_key = 'your-openai-api-key-here'" 
