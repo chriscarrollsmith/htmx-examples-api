@@ -1,0 +1,13 @@
+FROM postgrest/postgrest:latest
+
+# Copy configuration file
+COPY postgrest.conf /etc/postgrest.conf
+
+# Set the configuration file path
+ENV PGRST_CONF=/etc/postgrest.conf
+
+# Expose the port
+EXPOSE 3000
+
+# Start PostgREST
+CMD ["postgrest"] 

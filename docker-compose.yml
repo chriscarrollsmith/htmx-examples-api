@@ -18,14 +18,4 @@ services:
       PGRST_DB_EXTRA_SEARCH_PATH: public,openai
     restart: unless-stopped
     env_file:
-      - .env
-
-  web:
-    image: nginx:alpine
-    ports:
-      - "8080:80"
-    volumes:
-      - ./search_ui.html:/usr/share/nginx/html/index.html
-    restart: unless-stopped
-    depends_on:
-      - postgrest 
+      - .env 
