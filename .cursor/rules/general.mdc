@@ -1,0 +1,24 @@
+---
+description: Understanding the project
+globs: 
+alwaysApply: true
+---
+This repository contains a large number of AI-generated files that were produced during a workflow that involved:
+
+1. Scraping code examples from https://htmx.org/examples
+2. Using the `llm` CLI tool to transform the scraped examples into structured JSON data
+3. Creating a serverless PostgreSQL database on Digital Ocean with the help of the `doctl` CLI tool and setting up users and secrets for DB management
+4. Uploading the structured examples data to the PostgreSQL database
+5. Embedding the examples with an OpenAI model and uploading them to the PostgreSQL database
+6. Creating a pgsql function to power semantic similarity search
+7. Creating and deploying a public-facing PostgREST API on a Digital Ocean droplet that uses the web_anon role to run similarity search over the embedded HTMX examples
+
+You will be responsible for distilling and summarizing part of this workflow into a clear instruction set and validating that your distilled instructions work correctly. You are designing a workflow for LLM agents, not for humans, so we want the steps to mostly involve bash commands, python scripts, and CLI tools, not web interfaces.
+
+Unfortunately, the original LLM agent often lost sight of what our actual goal was, so part of your job will be to ignore the wrong turns and incorrect design choices made by the original agent.
+
+To avoid cluttering the repository even more than it already is, you should put any working files you create during your workflow in `artifacts`, while only your polished final instructions and distilled helper scripts should go in the `workflow` folder. There should be, at most, one `.md` file, one `.sh` file, one `.sql` file, and one `.py` file in the `workflow` folder for any given step. There should be no more than one `.conf` file in the entire folder.
+
+Remember to *never* hard-code secrets in your scripts. Secrets may be written to `.env` and programmatically retrieved from there. Feel free to request human intervention for generating and managing secrets; you should never be using placeholder secrets.
+
+To avoid confusion, you should keep your bash console opened to the project root folder and should specify all file paths in relation to the project root.

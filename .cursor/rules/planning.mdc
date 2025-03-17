@@ -1,0 +1,116 @@
+---
+description: Planning and executing steps for task completion
+globs: 
+alwaysApply: true
+---
+## Planning Guidelines
+
+### Initial Assessment Phase
+
+Before creating tasks, the planner should:
+1. **Identify Required Tools and Rule Sets**:
+   - Analyze which tools (CLI, programming languages, APIs) will be needed
+   - Determine which rule sets (postgres, python, etc.) are relevant
+   - Include explicit references to these tools and rule sets in task descriptions
+
+2. **Understand Project Structure**:
+   - Identify where intermediate artifacts should be stored (`/artifacts`)
+   - Identify where final deliverables should be placed (`/workflow`)
+   - Understand existing project conventions and naming patterns
+
+3. **Evaluate Dependencies**:
+   - Identify external dependencies (APIs, services, credentials)
+   - Note any user intervention points (authentication, approvals)
+   - Plan for error handling and recovery strategies
+
+### Task Creation Guidelines
+
+When creating tasks, ensure they:
+
+1. **Are Specific and Actionable**:
+   - Include clear, measurable outcomes
+   - Specify exact file paths for deliverables
+   - Include command templates where applicable
+
+2. **Have Clear Deliverables**:
+   - Specify the exact format and location of outputs
+   - Distinguish between intermediate artifacts and final deliverables
+   - Include validation criteria for each deliverable
+
+3. **Include Relevant Context**:
+   - Reference specific rule sets to consult (e.g., "Review postgres rules")
+   - Mention specific tools to use (e.g., "Use doctl to create...")
+   - Include reminders about environment variables and secrets management
+
+4. **Are Properly Sequenced**:
+   - Ensure logical dependencies between tasks
+   - Allow for parallel execution where possible
+   - Include checkpoints for validation before proceeding
+
+### Execution Phase Guidelines
+
+When executing tasks:
+
+1. **Begin with Research**:
+   - Start by understanding existing code and documentation
+   - Use appropriate search tools to find relevant information
+   - Document findings in `/artifacts` before proceeding to implementation
+
+2. **Implement Incrementally**:
+   - Create minimal working examples before full implementation
+   - Test components individually before integration
+   - Document any deviations from the plan
+
+3. **Validate Continuously**:
+   - Include validation steps within each task
+   - Create test cases for scripts and commands
+   - Document validation results
+
+4. **Finalize Properly**:
+   - Ensure all deliverables meet quality standards
+   - Clean up temporary resources and artifacts
+   - Provide clear instructions for future use
+
+### Task Completion Guidelines
+
+Before marking a task as complete:
+
+1. **Review Deliverables**:
+   - Ensure all specified outputs have been created
+   - Verify that outputs meet quality standards
+   - Check that outputs are in the correct locations
+
+2. **Document Challenges**:
+   - Note any unexpected issues encountered
+   - Document workarounds or solutions
+   - Update task descriptions if necessary
+
+3. **Prepare for Next Task**:
+   - Ensure all dependencies for the next task are satisfied
+   - Summarize key findings that will inform the next task
+   - Identify any risks or challenges for upcoming tasks
+
+## Example Task Structure
+
+```
+{
+  "title": "Set Up PostgreSQL Database on DigitalOcean",
+  "description": "Create a managed PostgreSQL database on DigitalOcean using doctl CLI. Store connection details securely in .env file. TOOLS: doctl, bash. RULES: postgres. DELIVERABLE: /artifacts/postgres_setup.md with setup documentation and /workflow/setup_postgres_db.sh script. NOTE: Will require user authentication with doctl auth init."
+}
+```
+
+Once we've created a satisfactory plan, you will execute the tasks in sequence:
+
+```
+// Execution phase
+{
+  action: "execute",
+  getNext: true
+}
+
+// Complete task
+{
+  action: "complete",
+  taskId: "task-123"
+}
+```

@@ -1,0 +1,6 @@
+---
+description: Python dependency management and running Python code
+globs: *.py
+alwaysApply: false
+---
+Should you need to run any Python code, you may use `uv add packagename` to add required dependencies, and `uv run file.py` to run a script with the project's virtual environment.

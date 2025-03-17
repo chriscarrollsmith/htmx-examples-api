@@ -1,0 +1,10 @@
+---
+description: Working with PostgreSQL and PostgREST services and the Digital Ocean cloud platform
+globs: *postgres*, *.conf
+alwaysApply: false
+---
+To interact with PostgreSQL databases, you can use the Digital Ocean CLI tool, `doctl`, and the `psql` tool. You also have `docker compose`, in case you can find a way to use that with Digital Ocean. (Keep in mind that we're deploying remote services, not local ones.)
+
+The user may or may not need to run `doctl auth init` if you run into any authentication problems.
+
+The `psql` tool's command-line interface and pager and mostly inaccessible to you due to limitations of your toolset, so it's best to prefix PGPASSWORD to your commands and to use the (tuples only) flag so as to avoid the need for user intervention to enter passwords or manually page through outputs.

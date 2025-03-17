@@ -1,0 +1,16 @@
+---
+description: Working with large numbers of files or very lengthy files
+globs: 
+alwaysApply: false
+---
+Your work on this project will require sifting through and understanding large numbers of files, some of which are quite lengthy. Fortunately, you have some command-line tools that can help with distillation, summarization, question-answering, and context management.
+
+Running `repomix` will pack all files in the repository into a single `repomix-output.txt` file that can be sent to a long-context `gemini-2.0-flash-001` model for question-answering, though you will likely find it helpful, most of the time, to pipe some smaller subset of the repository's files that model.
+
+The `llm` tool is the one you will use to call `gemini-2.0-flash-001`. Use the `-m` flag to specify the model:
+
+```bash
+INSTRUCTIONS="Review the following packed file of our entire repository and distill a concise summary of the things we want to know: Thing 1, Thing 2, Thing 3."
+
+cat repomix-output.txt | llm "$INSTRUCTIONS" -m gemini-2.0-flash-001 > artifacts/repo-summary.md
+```

@@ -6,7 +6,11 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "openai>=1.66.3",
+    "perplexity-cli",
     "psycopg>=3.2.6",
     "psycopg2>=2.9.10",
     "python-dotenv>=1.0.1",
 ]
+
+[tool.uv.sources]
+perplexity-cli = { git = "https://github.com/chriscarrollsmith/perplexity-cli.git" }
