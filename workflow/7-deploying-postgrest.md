@@ -23,6 +23,71 @@ The middleware sits between clients and PostgREST, intercepting search requests,
 
 **Note:** All required environment variables (e.g., DB_HOST, DB_PORT, DB_NAME, POSTGREST_PASSWORD, POSTGREST_JWT_SECRET, etc.) must be placed in the project root's `.env` file. The deployment script automatically loads them from that file.
 
+### Verify or Generate Required Credentials
+
+Before deploying PostgREST, you need to check if the required security credentials are already set in your `.env` file:
+
+1. Check if `POSTGREST_PASSWORD` and `POSTGREST_JWT_SECRET` are already set and non-empty:
+   ```bash
+   source .env
+   
+   # Check if POSTGREST_PASSWORD is set
+   if [ -z "$POSTGREST_PASSWORD" ]; then
+     echo "POSTGREST_PASSWORD is not set, generating a new one..."
+     POSTGREST_PASSWORD=$(openssl rand -base64 24)
+     echo "Generated password: $POSTGREST_PASSWORD"
+     echo "POSTGREST_PASSWORD=$POSTGREST_PASSWORD" >> .env
+     
+     # Since the password is new, we need to update the database
+     echo "Updating web_anon role with new password..."
+     PGPASSWORD=$DB_PASS psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "ALTER ROLE web_anon WITH PASSWORD '$POSTGREST_PASSWORD';"
+   else
+     echo "POSTGREST_PASSWORD is already set"
+   fi
+   
+   # Check if POSTGREST_JWT_SECRET is set
+   if [ -z "$POSTGREST_JWT_SECRET" ]; then
+     echo "POSTGREST_JWT_SECRET is not set, generating a new one..."
+     POSTGREST_JWT_SECRET=$(openssl rand -base64 32)
+     echo "Generated JWT secret: $POSTGREST_JWT_SECRET"
+     echo "POSTGREST_JWT_SECRET=$POSTGREST_JWT_SECRET" >> .env
+   else
+     echo "POSTGREST_JWT_SECRET is already set"
+   fi
+   ```
+
+2. If you need to manually generate these credentials because they are not set in your `.env` file:
+   
+   **POSTGREST_JWT_SECRET** - A secure key used for JWT authentication:
+   ```bash
+   openssl rand -base64 32
+   ```
+   Example output: `iKHmutpqrM66Yvu1y0bq/479jXNqtNSvbFTR2rTkxyU=`
+
+   **POSTGREST_PASSWORD** - A secure password for the web_anon database role:
+   ```bash
+   openssl rand -base64 24
+   ```
+   Example output: `WjFJLbeHDcB/+Wc6mk364hsHJtQ3Luxz`
+
+After generating these credentials, add them to your `.env` file:
+```
+POSTGREST_PASSWORD=your_generated_password
+POSTGREST_JWT_SECRET=your_generated_jwt_secret
+```
+
+Then update the database with the new password for the web_anon role:
+```bash
+source .env
+PGPASSWORD=$DB_PASS psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "ALTER ROLE web_anon WITH PASSWORD '$POSTGREST_PASSWORD';"
+```
+
+3. After verifying or generating credentials, make sure you can connect to the database as the `web_anon` user:
+   ```bash
+   source .env
+   PGPASSWORD=$POSTGREST_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $POSTGREST_USER -d $DB_NAME -c "SELECT 1;"
+   ```
+
 ### SSH Key Setup
 
 If you followed the steps in the previous workflow, you should already have an SSH key pair set up for connecting to the Digital Ocean droplet. If not, you will need to follow the fixup steps below to generate and import a new SSH key pair.
@@ -89,9 +154,11 @@ mkdir -p /opt/postgrest
 cd /opt/postgrest
 
 # Download and extract PostgREST
-wget https://github.com/PostgREST/postgrest/releases/download/v12.2.8/postgrest-v12.2.8-linux-static-x64.tar.xz
-tar -xf postgrest-v12.2.8-linux-static-x64.tar.xz
-rm postgrest-v12.2.8-linux-static-x64.tar.xz
+# Note: Make sure to use the correct URL for the latest version
+wget https://github.com/PostgREST/postgrest/releases/download/v12.2.8/postgrest-v12.2.8-linux-static-x86-64.tar.xz
+tar -xf postgrest-v12.2.8-linux-static-x86-64.tar.xz
+chmod +x postgrest
+rm postgrest-v12.2.8-linux-static-x86-64.tar.xz
 ```
 
 #### Configuring PostgREST
@@ -101,15 +168,16 @@ rm postgrest-v12.2.8-linux-static-x64.tar.xz
 Create a configuration file (`postgrest.conf`):
 
 ```bash
+# Create the configuration file
 cat > /opt/postgrest/postgrest.conf << EOF
 # PostgreSQL connection string
-db-uri = "postgres://web_anon:${POSTGREST_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require"
+db-uri = "postgres://${POSTGREST_USER}:${POSTGREST_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=require"
 
 # The database schema to expose to REST clients
 db-schema = "api"
 
 # The database role to use when executing commands
-db-anon-role = "web_anon"
+db-anon-role = "${POSTGREST_USER}"
 
 # JWT secret for authentication (if needed)
 jwt-secret = "${POSTGREST_JWT_SECRET}"
@@ -126,9 +194,30 @@ db-extra-search-path = "public"
 EOF
 ```
 
-#### Creating a Systemd Service
+If you're having issues with heredocs on the remote server, you can create the configuration file in multiple steps:
 
 ```bash
+# Step 1: Create the basic file structure
+cd /opt/postgrest
+echo "# PostgreSQL connection string" > postgrest.conf
+echo "db-uri = \"postgres://$POSTGREST_USER:$POSTGREST_PASSWORD@$DB_HOST:$DB_PORT/$DB_NAME?sslmode=require\"" >> postgrest.conf
+
+# Step 2: Add schema and role settings
+echo -e "\n# The database schema to expose to REST clients\ndb-schema = \"api\"\n\n# The database role to use when executing commands\ndb-anon-role = \"$POSTGREST_USER\"" >> postgrest.conf
+
+# Step 3: Add JWT secret
+echo -e "\n# JWT secret for authentication\njwt-secret = \"$POSTGREST_JWT_SECRET\"" >> postgrest.conf
+
+# Step 4: Add server settings and other configuration
+echo -e "\n# Server settings\nserver-port = 3001\nserver-host = \"127.0.0.1\"  # Only listen on localhost, as Nginx will proxy requests\n\n# The maximum number of rows to return from a request\nmax-rows = 100\n\n# Additional schema paths\ndb-extra-search-path = \"public\"" >> postgrest.conf
+```
+
+#### Creating a Systemd Service
+
+Create a systemd service file for PostgREST:
+
+```bash
+# Create the service file
 cat > /etc/systemd/system/postgrest.service << EOF
 [Unit]
 Description=PostgREST API Server
@@ -145,11 +234,33 @@ Environment="PGRST_JWT_SECRET=${POSTGREST_JWT_SECRET}"
 [Install]
 WantedBy=multi-user.target
 EOF
+```
 
+If you're having issues with heredocs on the remote server, you can create the service file in multiple steps:
+
+```bash
+# Step 1: Create the base service file
+cd /opt/postgrest
+echo "[Unit]" > postgrest.service
+echo -e "Description=PostgREST API Server\nAfter=network.target\n\n[Service]" >> postgrest.service
+
+# Step 2: Add the service configuration
+echo -e "ExecStart=/opt/postgrest/postgrest /opt/postgrest/postgrest.conf\nRestart=always\nUser=root\nGroup=root\nWorkingDirectory=/opt/postgrest\nEnvironment=\"PGRST_JWT_SECRET=$POSTGREST_JWT_SECRET\"\n\n[Install]\nWantedBy=multi-user.target" >> postgrest.service
+
+# Step 3: Copy the service file to the systemd directory
+sudo cp postgrest.service /etc/systemd/system/
+```
+
+Enable and start the PostgREST service:
+
+```bash
 # Enable and start the service
 systemctl daemon-reload
 systemctl enable postgrest
 systemctl start postgrest
+
+# Check the status to ensure it's running
+systemctl status postgrest
 ```
 
 ### 3. Implementing the Middleware
@@ -179,37 +290,167 @@ The middleware's `app.js` implements:
 3. A proxy for all other requests to PostgREST
 4. Logging and error handling
 
-Key implementation details:
+Create the `app.js` file with the following content:
 
 ```javascript
-// Function to generate embeddings
-async function generateEmbedding(text) {
-  const model = genAI.getGenerativeModel({ model: "models/text-embedding-004" });
-  
-  const embeddingResult = await model.embedContent({
-    content: text,
-    taskType: "RETRIEVAL_QUERY",
-    title: "HTMX search query",
-  });
-  
-  return embeddingResult.embedding.values;
+const express = require('express');
+const axios = require('axios');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const winston = require('winston');
+require('dotenv').config();
+
+// Initialize logger
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'htmx-middleware' },
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+    new winston.transports.Console({ format: winston.format.simple() })
+  ],
+});
+
+const app = express();
+app.use(express.json());
+
+const PORT = process.env.MIDDLEWARE_PORT || 3000;
+const POSTGREST_URL = process.env.POSTGREST_URL || 'http://localhost:3001';
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+
+if (!GOOGLE_API_KEY) {
+  logger.error('GOOGLE_API_KEY is not set in environment variables');
+  process.exit(1);
 }
 
-// Search endpoint
+// Initialize Google AI
+const genAI = new GoogleGenerativeAI(GOOGLE_API_KEY);
+
+// Function to generate embeddings
+async function generateEmbedding(text) {
+  try {
+    // Create embedding model
+    const model = genAI.getGenerativeModel({ model: "models/text-embedding-004" });
+    
+    // Generate embedding
+    const embeddingResult = await model.embedContent({
+      content: text,
+      taskType: "RETRIEVAL_QUERY",
+      title: "HTMX search query",
+    });
+    
+    return embeddingResult.embedding.values;
+  } catch (error) {
+    logger.error('Error generating embedding:', error);
+    throw new Error('Embedding generation failed: ' + error.message);
+  }
+}
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'healthy' });
+});
+
+// Basic search endpoint
 app.get('/api/search', async (req, res) => {
-  // Generate embedding for query
-  const embedding = await generateEmbedding(req.query.q);
-  
-  // Call PostgREST with the embedding
-  const response = await axios.post(`${POSTGREST_URL}/rpc/vector_search`, {
-    query_embedding: embedding,
-    embedding_type: embeddingType,
-    result_limit: limit,
-    category_filter: category,
-    complexity_filter: complexity
-  });
-  
-  res.json(response.data);
+  try {
+    const query = req.query.q;
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter "q" is required' });
+    }
+    
+    const limit = parseInt(req.query.limit || '5');
+    const embeddingType = req.query.embedding_type || 'content';
+    const category = req.query.category || null;
+    const complexity = req.query.complexity || null;
+    
+    logger.info('Processing search query:', { query, embeddingType, limit });
+    
+    // Generate embedding
+    const embedding = await generateEmbedding(query);
+    
+    // Call PostgREST with the embedding
+    const response = await axios.post(`${POSTGREST_URL}/rpc/vector_search`, {
+      query_embedding: embedding,
+      embedding_type: embeddingType,
+      result_limit: limit,
+      category_filter: category,
+      complexity_filter: complexity
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    logger.error('Search error:', error);
+    res.status(500).json({ 
+      error: 'Search failed', 
+      details: error.message 
+    });
+  }
+});
+
+// Multi-search endpoint
+app.get('/api/multi-search', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) {
+      return res.status(400).json({ error: 'Query parameter "q" is required' });
+    }
+    
+    const limit = parseInt(req.query.limit || '5');
+    const category = req.query.category || null;
+    const complexity = req.query.complexity || null;
+    
+    logger.info('Processing multi-search query:', { query, limit });
+    
+    // Generate embedding
+    const embedding = await generateEmbedding(query);
+    
+    // Call PostgREST with the embedding
+    const response = await axios.post(`${POSTGREST_URL}/rpc/multi_vector_search`, {
+      query_embedding: embedding,
+      result_limit: limit,
+      category_filter: category,
+      complexity_filter: complexity
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    logger.error('Multi-search error:', error);
+    res.status(500).json({ 
+      error: 'Multi-search failed', 
+      details: error.message 
+    });
+  }
+});
+
+// Forward all other requests to PostgREST
+app.all('*', async (req, res) => {
+  try {
+    // Prepare headers but remove host
+    const headers = { ...req.headers };
+    delete headers.host;
+    
+    const response = await axios({
+      method: req.method,
+      url: `${POSTGREST_URL}${req.url}`,
+      data: req.body,
+      headers: headers
+    });
+    
+    res.status(response.status).json(response.data);
+  } catch (error) {
+    logger.error('PostgREST proxy error:', error);
+    res.status(error.response?.status || 500).json(
+      error.response?.data || { error: 'Proxy request failed' }
+    );
+  }
+});
+
+app.listen(PORT, () => {
+  logger.info(`Middleware listening on port ${PORT}`);
 });
 ```
 
@@ -369,6 +610,10 @@ This request:
    - Check systemd logs: `journalctl -u postgrest -n 50`
    - Verify that the functions exist in the `api` schema: `PGPASSWORD=$DB_PASS psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "SELECT proname FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid WHERE n.nspname = 'api';" | cat`
 
+4. **PostgREST Binary Download Issues**:
+   - If the PostgREST binary URL in the documentation doesn't work, check the latest release URL at: https://github.com/PostgREST/postgrest/releases
+   - The correct URL format for version 12.2.8 is: `https://github.com/PostgREST/postgrest/releases/download/v12.2.8/postgrest-v12.2.8-linux-static-x86-64.tar.xz`
+
 ## Security Considerations
 
 1. **API Key Protection**:
@@ -407,6 +652,12 @@ Previous deployment attempts showed issues with database connection strings, esp
 Embedding API calls could fail due to rate limits, network issues, or invalid input.
 
 - **Solution**: Implemented robust error handling and logging in the middleware to gracefully handle and report all types of errors.
+
+### Challenge 4: PostgREST Binary URL
+
+The URL format for the PostgREST binary has changed between versions.
+
+- **Solution**: For version 12.2.8, the correct URL is `https://github.com/PostgREST/postgrest/releases/download/v12.2.8/postgrest-v12.2.8-linux-static-x86-64.tar.xz`. Always check the latest release page for the correct URL format.
 
 ## Performance Optimization
 

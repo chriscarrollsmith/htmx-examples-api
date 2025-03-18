@@ -136,7 +136,14 @@ PROJECT_ID="your-project-id"
 doctl projects resources assign $PROJECT_ID --resource="do:droplet:$DROPLET_ID"
 ```
 
-Add the droplet details to your `.env` file:
+Generate secure keys for the PostgREST user and JWT secret:
+
+```bash
+openssl rand -base64 24 # for POSTGREST_PASSWORD
+openssl rand -base64 32 # for POSTGREST_JWT_SECRET
+```
+
+Use your file editing tool to add the droplet and PostgREST user details to your `.env` file:
 
 ```bash
 # PostgREST droplet details
