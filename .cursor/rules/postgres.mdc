@@ -7,4 +7,4 @@ To interact with PostgreSQL databases, you can use the Digital Ocean CLI tool, `
 
 The user may or may not need to run `doctl auth init` if you run into any authentication problems.
 
-The `psql` tool's command-line interface and pager and mostly inaccessible to you due to limitations of your toolset, so it's best to prefix PGPASSWORD to your commands and to use the (tuples only) flag so as to avoid the need for user intervention to enter passwords or manually page through outputs.
+The `psql` tool's command-line interface and pager and mostly inaccessible to you due to limitations of your toolset, so it's best to prefix PGPASSWORD to your commands and to use the `-t` (tuples only) flag and pipe the output to sdout with `| cat` so as to avoid the need for user intervention to enter passwords or manually page through outputs.

@@ -8,4 +8,3 @@ To help with obtaining guidance from the web, you can use either your built-in w
 ```bash
 uv run perplexity "How do I accomplish some task using some programming tool, given some set of goals and constrints? Provide a concrete example."
 ```
-
