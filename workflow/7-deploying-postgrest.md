@@ -19,8 +19,49 @@ The middleware sits between clients and PostgREST, intercepting search requests,
 - Digital Ocean PostgreSQL database (set up in previous steps)
 - Google AI API key (for generating embeddings)
 - Database credentials and environment variables
+- SSH access to the droplet (see SSH Key Setup below)
 
 **Note:** All required environment variables (e.g., DB_HOST, DB_PORT, DB_NAME, POSTGREST_PASSWORD, POSTGREST_JWT_SECRET, etc.) must be placed in the project root's `.env` file. The deployment script automatically loads them from that file.
+
+### SSH Key Setup
+
+If you followed the steps in the previous workflow, you should already have an SSH key pair set up for connecting to the Digital Ocean droplet. If not, you will need to follow the fixup steps below to generate and import a new SSH key pair.
+
+1. **Generate an SSH key pair on your local machine**:
+   ```bash
+   # Option A: Generate key in default location
+   ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -N ""
+   
+   # Option B: Generate key in custom location
+   ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f ~/.ssh/id_rsa_do -N ""
+   ```
+   Copy the public key content from your console, as you will need it to add your key to an existing droplet.
+
+2. To add your key to an existing droplet, you must:
+
+   a. Log into your droplet via the Digital Ocean web console (in the Digital Ocean dashboard, select your droplet and click "Console")
+   
+   b. Once logged in, create the SSH directory (if it doesn't exist) and add your public key to the authorized_keys file:
+   ```bash
+   mkdir -p ~/.ssh
+   echo "YOUR_PUBLIC_KEY_CONTENT" >> ~/.ssh/authorized_keys
+   chmod 600 ~/.ssh/authorized_keys
+
+   # Verify by checking the contents
+   cat ~/.ssh/authorized_keys
+   ```
+   Replace `YOUR_PUBLIC_KEY_CONTENT` with the content you copied in step 1.
+
+4. **Test your SSH connection**:
+   ```bash
+   # If using Option A (default location)
+   doctl compute ssh $DROPLET_ID --ssh-command "echo 'SSH Access Successful'"
+
+   # If using Option B (custom location)
+   doctl compute ssh $DROPLET_ID --ssh-key-path ~/.ssh/id_rsa_do --ssh-command "echo 'SSH Access Successful'"
+   ```
+
+**Note:** For new droplets, you can select the SSH key during the creation process, and it will be automatically added to the droplet's authorized_keys file.
 
 ## Deployment Process
 

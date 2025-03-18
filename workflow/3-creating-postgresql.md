@@ -99,6 +99,21 @@ DO_DATABASE_ID=your-database-id
 
 ## 4. Create a Droplet for PostgREST
 
+**Important:** Before creating your droplet, verify that you have valid Digital Ocean compute SSH key access:
+
+```bash
+# List SSH keys in your Digital Ocean account
+doctl compute ssh-key list
+
+# Ensure at least one key from the list has a matching private key on your local machine
+# If no matching keys exist, generate and import a new one:
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com"
+doctl compute ssh-key import "droplet-access-key" --public-key-file ~/.ssh/id_rsa.pub
+
+# Verify fingerprints match between your local key and the one in Digital Ocean
+ssh-keygen -l -f ~/.ssh/id_rsa  # Compare this output with the fingerprint from doctl ssh-key list
+```
+
 Check available droplet sizes:
 
 ```bash
@@ -216,5 +231,4 @@ chmod +x workflow/setup_postgres_db.sh
 # Run the script
 ./workflow/setup_postgres_db.sh
 ```
-
 > **Important:** This script has not been fully tested or validated yet. Use it at your own risk or follow the step-by-step manual process outlined in this document.
