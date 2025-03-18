@@ -1,58 +1,11 @@
-# Creating PostgreSQL Functions for Vector Similarity Search
+-- =========================================================
+-- HTMX Examples Vector Similarity Search Functions
+-- =========================================================
+-- This file contains PL/pgSQL functions for performing vector 
+-- similarity search on HTMX examples using pre-computed embeddings.
 
-This document outlines the process of implementing PL/pgSQL functions for vector similarity search using pre-embedded query vectors. This approach allows for more efficient and flexible searches compared to the previous implementation that relied on example IDs.
-
-## Overview
-
-The solution consists of three main functions:
-
-1. `api.vector_search` - Searches for examples similar to a provided query vector
-2. `api.multi_vector_search` - Performs searches across all embedding types and combines the results
-3. `api.find_similar_examples` - Finds examples similar to an existing example (backward compatibility)
-
-These functions rely on the pgvector extension to perform vector similarity calculations using cosine distance.
-
-## Prerequisites
-
-- PostgreSQL database with pgvector extension installed
-- HTMX examples data loaded in the database
-- Embeddings generated for the examples (see [5-embedding.md](5-embedding.md))
-- `.env` file with database connection credentials
-
-## Understanding the Database Schema
-
-The database contains two main tables:
-
-1. `htmx_examples` - Stores the examples with their metadata
-2. `htmx_embeddings` - Stores embedding vectors for different aspects of each example:
-   - `title_embedding` - Embedding for the example title
-   - `description_embedding` - Embedding for the example description
-   - `content_embedding` - Embedding for the combined content
-   - `key_concepts_embedding` - Embedding for the key concepts
-
-Each embedding is stored as a VECTOR type with 768 dimensions (Google AI's embedding model dimension).
-
-## Implementation Steps
-
-### 1. Create the SQL Function Files
-
-Create the `similarity_search.sql` file in the workflow directory:
-
-```bash
-touch workflow/similarity_search.sql
-```
-
-This file will contain all the PostgreSQL functions needed for vector similarity search.
-
-### 2. Implement the Vector Search Functions
-
-The `similarity_search.sql` file contains three main functions:
-
-#### 2.1 `api.vector_search` Function
-
-This function takes a pre-embedded query vector and finds the most similar examples:
-
-```sql
+-- Function to search using an existing embedding vector 
+-- (for direct querying with pre-embedded vectors)
 CREATE OR REPLACE FUNCTION api.vector_search(
     query_embedding VECTOR,              -- Pre-embedded query vector
     embedding_type TEXT DEFAULT 'content', -- Type of embedding to search against
@@ -72,7 +25,7 @@ CREATE OR REPLACE FUNCTION api.vector_search(
     demo_explanation TEXT,
     complexity_level TEXT,
     use_cases TEXT[],
-    similarity FLOAT                     -- Similarity score (0-1)
+    similarity FLOAT                     -- Cosine similarity score (0-1)
 ) AS $$
 DECLARE
     embedding_column TEXT;
@@ -116,19 +69,9 @@ BEGIN
     USING query_embedding, category_filter, complexity_filter, result_limit;
 END;
 $$ LANGUAGE plpgsql;
-```
 
-Key features:
-- Takes a pre-embedded query vector as input
-- Allows selection of which embedding type to search against
-- Provides optional filtering by category and complexity level
-- Returns full example data along with similarity scores
-
-#### 2.2 `api.multi_vector_search` Function
-
-This function performs searches across all embedding types and combines the results:
-
-```sql
+-- Multi-embedding search function that performs searches across multiple embedding types
+-- and combines the results with a ranking algorithm
 CREATE OR REPLACE FUNCTION api.multi_vector_search(
     query_embedding VECTOR,             -- Pre-embedded query vector
     result_limit INTEGER DEFAULT 5,     -- Maximum number of results to return
@@ -248,19 +191,9 @@ BEGIN
     USING query_embedding, category_filter, complexity_filter, result_limit;
 END;
 $$ LANGUAGE plpgsql;
-```
 
-Key features:
-- Searches across all embedding types in a single query
-- Uses weighted combination of scores (40% content, 20% title, 20% description, 20% key concepts)
-- Returns individual similarity scores for each embedding type for transparency
-- Provides optional filtering by category and complexity level
-
-#### 2.3 Backward Compatibility with `api.find_similar_examples`
-
-To maintain backward compatibility, we also implement a function that finds examples similar to an existing example:
-
-```sql
+-- Function to find similar examples to an existing example
+-- This doesn't regenerate embeddings on every call, making it more efficient
 CREATE OR REPLACE FUNCTION api.find_similar_examples(
     example_id TEXT,                    -- Example ID to find similar examples to
     embedding_type TEXT DEFAULT 'content', -- Type of embedding to use
@@ -342,136 +275,8 @@ BEGIN
     USING reference_embedding, example_id, category_filter, complexity_filter, result_limit;
 END;
 $$ LANGUAGE plpgsql;
-```
 
-### 3. Grant Permissions
-
-To ensure that the web_anon role can execute the functions, we add the following grants:
-
-```sql
 -- Grant execute permissions to the web_anon role
 GRANT EXECUTE ON FUNCTION api.vector_search TO web_anon;
 GRANT EXECUTE ON FUNCTION api.multi_vector_search TO web_anon;
-GRANT EXECUTE ON FUNCTION api.find_similar_examples TO web_anon;
-```
-
-### 4. Create Deployment Script
-
-To facilitate easy deployment of the functions, we create a bash script `apply_search_functions.sh` that:
-
-1. Loads database credentials from the `.env` file
-2. Executes the SQL file
-3. Tests the functions to ensure they're working correctly
-
-## Testing the Functions
-
-To test the functions, we can use the following commands:
-
-```bash
-# Find examples similar to an existing example
-source .env && PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c \
-"SELECT id, title, similarity FROM api.find_similar_examples('active-search', 'content', 3);" -t | cat
-
-# Verify the vector_search function exists
-source .env && PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c \
-"SELECT COUNT(*) FROM pg_proc WHERE proname = 'vector_search' AND pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'api');" -t | cat
-
-# Verify permissions
-source .env && PGPASSWORD="$DB_PASS" psql -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" -d "$DB_NAME" -c \
-"SELECT proname, proacl FROM pg_proc WHERE pronamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'api') AND proname IN ('vector_search', 'multi_vector_search', 'find_similar_examples');" -t | cat
-```
-
-## Challenges and Solutions
-
-### Challenge 1: Working with Pre-embedded Vectors
-
-**Problem:** Unlike the previous implementation that required generating embeddings on the fly or using example IDs, our new approach needed to work with pre-embedded query vectors.
-
-**Solution:** Created a dedicated function `api.vector_search` that takes a vector parameter directly, allowing clients to pass pre-embedded queries.
-
-### Challenge 2: Supporting Multiple Embedding Types
-
-**Problem:** Different types of searches might benefit from different embedding types (title, description, content, key concepts).
-
-**Solution:** 
-1. Added an `embedding_type` parameter to select which embedding column to use
-2. Created a more sophisticated `api.multi_vector_search` function that searches across all embedding types and combines the results using weighted scoring
-
-### Challenge 3: Ensuring Backward Compatibility
-
-**Problem:** Existing code might rely on the ability to find examples similar to a specific example ID.
-
-**Solution:** Implemented `api.find_similar_examples` to maintain backward compatibility while allowing migration to the more flexible approach using pre-embedded vectors.
-
-### Challenge 4: Testing Vector Search Functions
-
-**Problem:** It's difficult to test functions that require vector inputs directly from the command line.
-
-**Solution:** Created a testing script that:
-1. Verifies function existence using PostgreSQL system catalogs
-2. Tests the backward-compatible function with an existing example ID
-3. Verifies permissions to ensure the web_anon role can execute the functions
-
-## Usage Examples
-
-### 1. Basic Vector Search
-
-```sql
--- Assuming you have a query embedding vector
-SELECT * FROM api.vector_search(
-    query_embedding, -- Pre-embedded query vector
-    'content',       -- Type of embedding to search against
-    5,               -- Maximum number of results
-    NULL,            -- Optional category filter
-    NULL             -- Optional complexity filter
-);
-```
-
-### 2. Multi-embedding Search
-
-```sql
--- Search across all embedding types
-SELECT * FROM api.multi_vector_search(
-    query_embedding, -- Pre-embedded query vector
-    5,               -- Maximum number of results
-    NULL,            -- Optional category filter
-    NULL             -- Optional complexity filter
-);
-```
-
-### 3. Finding Similar Examples
-
-```sql
--- Find examples similar to an existing example
-SELECT * FROM api.find_similar_examples(
-    'inline-validation', -- Example ID to find similar examples to
-    'content',           -- Type of embedding to use
-    5,                   -- Maximum number of results
-    NULL,                -- Optional category filter
-    NULL                 -- Optional complexity filter
-);
-```
-
-## Next Steps
-
-1. **Create a web service API endpoint** that generates embeddings for user queries and calls these functions
-2. **Implement caching** for frequently used query embeddings to reduce embedding API calls
-3. **Add filtering options** for more advanced search capabilities
-4. **Create indexes** on the embedding columns for better performance on large datasets
-
-## Deploying the Solution
-
-To deploy the similarity search functions:
-
-```bash
-# Make the script executable
-chmod +x workflow/apply_search_functions.sh
-
-# Run the script to deploy and test the functions
-./workflow/apply_search_functions.sh
-```
-
-This will:
-1. Apply the SQL functions to the database
-2. Test them to ensure they're working correctly
-3. Display the results of the tests
+GRANT EXECUTE ON FUNCTION api.find_similar_examples TO web_anon; 

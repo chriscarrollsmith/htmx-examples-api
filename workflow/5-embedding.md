@@ -37,12 +37,12 @@ The embedding process involves:
 
 4. Update the database schema (if needed):
    ```bash
-   uv run workflow/simple_embed.py --update-schema
+   uv run workflow/embed_examples.py --update-schema
    ```
 
 5. Generate embeddings for all examples:
    ```bash
-   uv run workflow/simple_embed.py
+   uv run workflow/embed_examples.py
    ```
 
 ## Setup
@@ -86,12 +86,12 @@ Note: Unlike other Google Cloud services, the Google AI API key cannot be obtain
 The Google AI embedding models produce 768-dimensional vectors, while the default schema might be configured for OpenAI's 1536-dimensional vectors. Run the script with the `--update-schema` flag to update the table schema:
 
 ```bash
-uv run workflow/simple_embed.py --update-schema
+uv run workflow/embed_examples.py --update-schema
 ```
 
 ## Solution
 
-We've created a simplified solution that combines all functionality into a single script: `workflow/simple_embed.py`.
+We've created a simplified solution that combines all functionality into a single script: `workflow/embed_examples.py`.
 
 This script provides:
 
@@ -106,7 +106,7 @@ This script provides:
 ### Generating Embeddings for All Examples
 
 ```bash
-uv run workflow/simple_embed.py
+uv run workflow/embed_examples.py
 ```
 
 This will:
@@ -129,21 +129,21 @@ Examples:
 
 ```bash
 # Process only the first 5 examples
-uv run workflow/simple_embed.py --limit 5
+uv run workflow/embed_examples.py --limit 5
 
 # Process only examples in the 'events' category
-uv run workflow/simple_embed.py --filter "category = 'events'"
+uv run workflow/embed_examples.py --filter "category = 'events'"
 
 # Force update all embeddings, even if they already exist
-uv run workflow/simple_embed.py --force-update
+uv run workflow/embed_examples.py --force-update
 
 # Use a larger batch size for efficiency
-uv run workflow/simple_embed.py --batch-size 20
+uv run workflow/embed_examples.py --batch-size 20
 ```
 
 ## Implementation
 
-We use a single script approach (`simple_embed.py`) that handles:
+We use a single script approach (`embed_examples.py`) that handles:
 - Database connectivity
 - Google AI authentication
 - Content preparation and extraction

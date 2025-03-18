@@ -55,3 +55,4 @@ repomix-output.txt
 examples/
 processed_examples/
 *.crt
+artifacts
