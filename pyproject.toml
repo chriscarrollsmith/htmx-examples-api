@@ -5,11 +5,18 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "google-auth>=2.38.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-auth-oauthlib>=1.2.1",
+    "google-genai>=1.5.0",
+    "google-generativeai>=0.8.4",
     "openai>=1.66.3",
     "perplexity-cli",
     "psycopg>=3.2.6",
     "psycopg2>=2.9.10",
+    "pylint>=3.3.5",
     "python-dotenv>=1.0.1",
+    "requests>=2.32.3",
 ]
 
 [tool.uv.sources]
