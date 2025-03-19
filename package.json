@@ -1,0 +1,28 @@
+{
+  "name": "scrape-embed",
+  "version": "1.0.0",
+  "description": "This repository contains a PostgREST API for semantic search over HTMX examples. The API leverages vector embeddings to find examples based on semantic similarity rather than just keyword matching, allowing for more intuitive and relevant search results.",
+  "main": "index.js",
+  "directories": {
+    "example": "examples"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chriscarrollsmith/scrape-embed.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/chriscarrollsmith/scrape-embed/issues"
+  },
+  "homepage": "https://github.com/chriscarrollsmith/scrape-embed#readme",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "dotenv": "^16.4.7"
+  }
+}
