@@ -1,7 +1,6 @@
 # HTMX Examples Semantic Search API
 
-This repository contains a PostgREST API for semantic search over HTMX examples. The API leverages vector embeddings to find examples based on semantic similarity rather than just keyword matching, allowing for more intuitive and relevant search results.
-
+This repository contains a PostgREST API for semantic search over HTMX code examples. The API leverages vector embeddings to find examples based on semantic similarity rather than just keyword matching, allowing for more intuitive and relevant search results.
 
 ## Overview
 
@@ -26,8 +25,8 @@ The API is accessible through a middleware that handles the embedding generation
 
 ### Basic Search
 
-```
-GET http://157.245.4.248/api/search?q=How%20to%20implement%20infinite%20scroll
+```bash
+curl -X GET "http://157.245.4.248/api/search?q=How%20to%20implement%20infinite%20scroll"
 ```
 
 This endpoint:
@@ -85,8 +84,8 @@ This endpoint:
 
 ### Multi-Vector Search
 
-```
-GET http://157.245.4.248/api/multi-search?q=Form%20validation%20with%20htmx
+```bash
+curl -X GET "http://157.245.4.248/api/multi-search?q=Form%20validation%20with%20htmx"
 ```
 
 This advanced search method checks your query against multiple embedding types (content, title, description, key_concepts) and combines the results with a weighted algorithm for better overall results.
@@ -130,8 +129,8 @@ The response follows the same format as the basic search, but includes additiona
 
 ### Finding Similar Examples
 
-```
-GET http://157.245.4.248/api/similar?id=form-validation&limit=3
+```bash
+curl -X GET "http://157.245.4.248/api/similar?id=form-validation&limit=3"
 ```
 
 This endpoint finds examples similar to an existing example by ID.
@@ -152,34 +151,34 @@ The response format is the same as the basic search.
 
 ### Find Examples About Lazy Loading
 
-```
-GET http://157.245.4.248/api/search?q=Implement%20lazy%20loading%20for%20images&limit=3
+```bash
+curl -X GET "http://157.245.4.248/api/search?q=Implement%20lazy%20loading%20for%20images&limit=3"
 ```
 
 ### Search for Animation Examples
 
-```
-GET http://157.245.4.248/api/multi-search?q=Smooth%20animations%20with%20CSS%20transitions&category=Animation&limit=5
+```bash
+curl -X GET "http://157.245.4.248/api/multi-search?q=Smooth%20animations%20with%20CSS%20transitions&category=Animation&limit=5"
 ```
 
 ### Find Similar Examples to Infinite Scroll
 
-```
-GET http://157.245.4.248/api/similar?id=infinite-scroll&limit=3
+```bash
+curl -X GET "http://157.245.4.248/api/similar?id=infinite-scroll&limit=3"
 ```
 
 ### Filter by Complexity Level
 
-```
-GET http://157.245.4.248/api/search?q=Simple%20modal%20dialog&complexity=beginner
+```bash
+curl -X GET "http://157.245.4.248/api/search?q=Simple%20modal%20dialog&complexity=beginner"
 ```
 
 ## Health Check
 
 To check if the API is functioning correctly:
 
-```
-GET http://157.245.4.248/health
+```bash
+curl -X GET "http://157.245.4.248/health"
 ```
 
 Expected response:
@@ -191,8 +190,8 @@ Expected response:
 
 To view the complete API schema and available functions:
 
-```
-GET http://157.245.4.248/direct/
+```bash
+curl -X GET "http://157.245.4.248/direct/"
 ```
 
 This will return the OpenAPI schema with detailed information about all available endpoints and data structures.
@@ -251,80 +250,6 @@ Content-Type: application/json
 
 Below are examples of how to query the API using different programming languages and tools:
 
-### Using cURL
-
-Basic search:
-```bash
-curl -X GET "http://157.245.4.248/api/search?q=How%20to%20implement%20tabs%20with%20htmx&limit=3"
-```
-
-Multi-vector search:
-```bash
-curl -X GET "http://157.245.4.248/api/multi-search?q=Form%20validation%20without%20page%20refresh&limit=5"
-```
-
-Similar examples search:
-```bash
-curl -X GET "http://157.245.4.248/api/similar?id=infinite-scroll&limit=3"
-```
-
-### Using Python with Requests
-
-```python
-import requests
-
-def search_htmx_examples(query, limit=5, embedding_type="content", category=None, complexity=None):
-    params = {"q": query, "limit": limit, "embedding_type": embedding_type}
-    if category: params["category"] = category
-    if complexity: params["complexity"] = complexity
-    response = requests.get("http://157.245.4.248/api/search", params=params)
-    return response.json()
-
-def multi_search(query, limit=5, category=None, complexity=None):
-    params = {"q": query, "limit": limit}
-    if category: params["category"] = category
-    if complexity: params["complexity"] = complexity
-    response = requests.get("http://157.245.4.248/api/multi-search", params=params)
-    return response.json()
-
-def find_similar(example_id, limit=5, embedding_type="content"):
-    params = {"id": example_id, "limit": limit, "embedding_type": embedding_type}
-    response = requests.get("http://157.245.4.248/api/similar", params=params)
-    return response.json()
-
-# Example usage
-results = search_htmx_examples("How to implement tabs", limit=3)
-```
-
-### Using JavaScript/Node.js with Axios
-
-```javascript
-const axios = require('axios');
-
-async function searchHtmxExamples(query, options = {}) {
-  const params = {
-    q: query,
-    limit: options.limit || 5,
-    embedding_type: options.embeddingType || 'content',
-    category: options.category,
-    complexity: options.complexity
-  };
-  
-  try {
-    const response = await axios.get('http://157.245.4.248/api/search', { params });
-    return response.data;
-  } catch (error) {
-    console.error('Error:', error.message);
-    throw error;
-  }
-}
-
-// Example usage
-searchHtmxExamples('How to implement infinite scroll', { limit: 3 })
-  .then(results => console.log(results))
-  .catch(error => console.error(error));
-```
-
 ## Rate Limiting and Usage Considerations
 
 When using this API, please be aware of the following considerations:
@@ -339,15 +264,54 @@ When using this API, please be aware of the following considerations:
 
 5. **Caching**: Consider caching results for common queries to improve performance and reduce API usage.
 
-## API Status and Support
+## Workflow Documentation
 
-This API is provided as a community resource for developers working with HTMX. While we strive to maintain high availability, please note:
+This repository includes detailed documentation of the process used to create this API, designed for repeatability by future AI agents with minimal human intervention. The workflow was executed by a Claude 3.7 Sonnet-powered Cursor Agent, with the documentation and scripts stored in the `workflow` directory.
 
-1. **Current Status**: The API is currently in stable production and actively maintained.
-2. **Support**: For questions or issues, please open an issue in the GitHub repository.
-3. **Updates**: API updates will be documented in the repository's release notes.
-4. **Uptime**: We aim for 99.5% uptime, but the service is provided as-is without formal SLA.
-5. **Breaking Changes**: We will announce any breaking changes at least 30 days in advance.
+### Documentation Files
+
+1. **Data Collection and Processing**
+   - [`1-scraping.md`](workflow/1-scraping.md) - Web scraping HTMX examples
+   - [`2-extracting-to-json.md`](workflow/2-extracting-to-json.md) - Converting scraped data to structured JSON
+   
+2. **Database Setup and Data Loading**
+   - [`3-creating-postgresql.md`](workflow/3-creating-postgresql.md) - Setting up PostgreSQL on Digital Ocean
+   - [`4-uploading-to-postgres.md`](workflow/4-uploading-to-postgres.md) - Loading examples into the database
+   
+3. **Vector Embeddings and Search**
+   - [`5-embedding.md`](workflow/5-embedding.md) - Generating vector embeddings
+   - [`6-creating-pgsql-functions.md`](workflow/6-creating-pgsql-functions.md) - Implementing vector similarity search
+   
+4. **API Deployment**
+   - [`7-deploying-postgrest.md`](workflow/7-deploying-postgrest.md) - Setting up and deploying the PostgREST API
+
+### Supporting Scripts and Files
+
+1. **Data Collection**
+   - `scrape_htmx.sh` - Script for scraping HTMX examples
+   - `extract_to_json.sh` - Script for JSON conversion
+   - `htmx_extraction_prompt.txt` - LLM prompt for data extraction
+   - `htmx_examples_schema.json` - JSON schema for examples
+
+2. **Database Setup**
+   - `setup_postgres_db.sh` - Database initialization script
+   - `setup_db_users.sql` - User and role configuration
+   - `init_db_schema.sql` - Database schema creation
+
+3. **Vector Search Implementation**
+   - `embed_examples.py` - Python script for generating embeddings
+   - `similarity_search.sql` - Vector similarity search functions
+   - `apply_search_functions.sh` - Script to apply search functions
+
+4. **API Configuration and Deployment**
+   - `setup_postgrest_config.sh` - PostgREST configuration
+   - `deploy_postgrest.sh` - API deployment script
+   - `setup_nginx.sh` - Nginx reverse proxy setup
+   - `middleware_app.js` - Node.js middleware implementation
+   - `setup_middleware.sh` - Middleware setup script
+   - `deploy_middleware.sh` - Middleware deployment script
+
+The workflow is supported by Cursor Rules in the `.cursor/rules` directory that provide additional context and guidelines for AI agents working with the codebase.
 
 ## Contributing
 
